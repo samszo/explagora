@@ -15,6 +15,14 @@ data/sessions/
 data/tmp/
 temp/
 
+#SPIP
+tmp/
+ecrire/
+local/
+plugins-dist/
+prive/
+squelettes-dist/
+
 #Doctrine 2
 data/DoctrineORMModule/Proxy/
 data/DoctrineORMModule/cache/
@@ -23,3 +31,9 @@ data/DoctrineORMModule/cache/
 # Legacy ZF1
 demos/
 extras/documentation
+
+application/configs/applicationGapaii.ini
+
+tmp/upload/Iks'Ray - Preėsentation.pdf
+
+public/indexGapai.php
