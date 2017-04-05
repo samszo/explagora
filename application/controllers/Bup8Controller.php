@@ -10,9 +10,9 @@ class Bup8Controller extends Zend_Controller_Action
 
     public function indexAction()
     {
-        // action body
-
-	    $buP8 = new Flux_Bup8($this->_getParam('idBase','flux_explagora'));
+    		//$this->view->reponse = 'toto';
+		
+    		$buP8 = new  Flux_Bup8($this->_getParam('idBase','flux_explagora'));
 	    $buP8->bTrace = false;
 	    $buP8->trace(__METHOD__." : ".$this->_getParam('obj'));
 	     
@@ -40,6 +40,8 @@ class Bup8Controller extends Zend_Controller_Action
 	    		break;
 	    }
 	    $buP8->trace('FIN');
+    		//$this->view->reponse = 'tata';
+    		
     }
 }
 

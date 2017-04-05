@@ -14,7 +14,7 @@
  * @copyright  2014 Samuel Szoniecky
  * @license    "New" BSD License
  */
-class Model_DbTable_articles extends Zend_Db_Table_Abstract
+class Model_DbTable_Spip_articles extends Zend_Db_Table_Abstract
 {
     
     /*
