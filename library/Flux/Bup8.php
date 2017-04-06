@@ -210,19 +210,19 @@ class Flux_Bup8 extends Flux_Site{
     {
     		$this->initDbTables();
     	 	$idAct = $this->dbA->ajouter(array("code"=>__METHOD__));
-    	 
-    		//récupère la liste avec le code barre
+    	 	$this->trace("Ajouter l'action ".$idAct);
+    	 	 
+    	 	$this->trace("récupère la liste avec le code barre");
 		$searchUrl = "http://catalogue.bu.univ-paris8.fr/cgi-bin/koha/opac-downloadshelf.pl";
     		$csv = $this->getUrlBodyContent($searchUrl,array("format"=>"6","shelfnumber"=>$idListe,"save"=>"Valider"),$this->bCache,Zend_Http_Client::POST);
 		$this->livres=array();
     		$arrBook= $this->csvStringToArray($csv,",",true);
-		$this->trace($csv,$arrBook);
 		
-    		//récupère la liste avec l'identifiant du livre
+    		$this->trace("récupère la liste avec l'identifiant du livre");
 		$searchUrl = "http://catalogue.bu.univ-paris8.fr/cgi-bin/koha/opac-downloadshelf.pl";
     		$bt = $this->getUrlBodyContent($searchUrl,array("format"=>"bibtex","shelfnumber"=>$idListe,"save"=>"Valider"),$this->bCache,Zend_Http_Client::POST);
     		$bt = new BibTeX_Parser(null,$bt);
-    		//met à jour le numéro de bouquin
+    		$this->trace("met à jour le numéro de livre");
     		for ($i = 0; $i < count($bt->items["raw"]); $i++) {
     			//@book{361039,
     			$r = explode(",",substr($bt->items["raw"][$i], 6));
@@ -231,13 +231,14 @@ class Flux_Bup8 extends Flux_Site{
     			$this->livres[$idBU]=$arrBook[$i];
     		}
     		
-    		//récupère le titre de la liste
+    		$this->trace("récupère le titre de la liste");
     		$searchUrl = "http://catalogue.bu.univ-paris8.fr/cgi-bin/koha/opac-shelves.pl?rss=1&op=view&shelfnumber=".$idListe;
     		$xmlDoc = new DOMDocument();
     		$xmlDoc->load($searchUrl);    		
     		//get elements from "<channel>"
     		$channel=$xmlDoc->getElementsByTagName('channel')->item(0);
     		$listeTitre = $channel->getElementsByTagName('title')->item(0)->childNodes->item(0)->nodeValue;
+
     		
     		/*récupère la liste avec les mots clefs
 		pas vraiment signifiant
@@ -246,11 +247,14 @@ class Flux_Bup8 extends Flux_Site{
     		$bt = new BibTeX_Parser(null,$bt);
     		*/
     		
-    		//enregistre la liste
-		if(!$this->dbD)$this->dbD = new Model_DbTable_Flux_Doc($this->db);	
+    		$this->trace("enregistre la liste");
+    		if(!$this->dbD)$this->dbD = new Model_DbTable_Flux_Doc($this->db);	
 		if(!$this->dbR) $this->dbR = new Model_DbTable_Flux_Rapport($this->db);		
 		if(!$this->dbT) $this->dbT = new Model_DbTable_Flux_Tag($this->db);
 		$idTag = $this->dbT->ajouter(array("code"=>"liste"));
+		$this->trace("enregistre la liste ".$idTag);
+		
+		$this->trace("enregistre la liste");
 		$url = "http://catalogue.bu.univ-paris8.fr/cgi-bin/koha/opac-shelves.pl?op=view&shelfnumber=".$idListe;
 		$idDocListe = $this->dbD->ajouter(array("titre"=>$listeTitre,"url"=>$url,"tronc"=>$idListe,"parent"=>$this->idDocRoot,"data"=>json_encode($this->livres)));
 		$idRap = $this->dbR->ajouter(array("monade_id"=>$this->idMonade
@@ -258,6 +262,7 @@ class Flux_Bup8 extends Flux_Site{
 				,"pre_id"=>$idAct,"pre_obj"=>"acti"
 				,"dst_id"=>$idTag,"dst_obj"=>"tag"
 		));
+		$this->trace("enregistre chaque livre");
 		foreach ($this->livres as $id=>$b) {
 			//récupère les informations du livre
 			$book = $this->setInfoPageLivre($b["idBU"]);
