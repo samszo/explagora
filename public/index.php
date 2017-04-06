@@ -25,6 +25,7 @@ require_once 'Zend/Application.php';
 //library supplémentaires
 set_include_path(ROOT_PATH.'/library');
 require_once( "bibtex-parser.php" );
+require_once( "CAS/CAS.php");
 
 
 // Create application, bootstrap, and run

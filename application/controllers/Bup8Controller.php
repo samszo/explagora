@@ -13,7 +13,7 @@ class Bup8Controller extends Zend_Controller_Action
     		//$this->view->reponse = 'toto';
 		
     		$buP8 = new  Flux_Bup8($this->_getParam('idBase','flux_explagora'));
-	    $buP8->bTrace = true;
+	    $buP8->bTrace = false;
 	    $buP8->trace(__METHOD__." : ".$this->_getParam('obj'));
 	     
 	    switch ($this->_getParam('obj')) {
@@ -43,6 +43,14 @@ class Bup8Controller extends Zend_Controller_Action
 	    $buP8->trace('FIN');
     		//$this->view->reponse = 'tata';
     		
+    }
+    
+    public function plateauAction()
+    {
+	    	$ssUti = new Zend_Session_Namespace('uti');
+	    	echo "redir=".$this->_getParam('idUti');
+	    	//if(!$ssUti->uti)	$this->_redirect('excode');
+    
     }
 }
 
