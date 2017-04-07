@@ -22,6 +22,8 @@ local/
 plugins-dist/
 prive/
 squelettes-dist/
+config/
+INSTALL.txt
 
 #Doctrine 2
 data/DoctrineORMModule/Proxy/
