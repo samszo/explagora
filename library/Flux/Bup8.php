@@ -323,7 +323,7 @@ class Flux_Bup8 extends Flux_Site{
 	    	
 	    	$json = '{"titre":"'.$liste[0]['titre'].'","idDoc":'.$liste[0]['doc_id'].',"idListe":'.$idListe.',"url":"'.$liste[0]['url'].'", "livres":[';
 	    	foreach ($liste as $b) {
-	    		$json .= '{"titre":"'.$b['bTitre'].'","idDoc":'.$b['bIdDoc'].',"url":"'.$b['bUrl'].'","idBU":'.$b['bTronc'].',"data":'.$b['bData'].'},';
+	    		$json .= '{"titre":"'.$b['bTitre'].'","recid":'.$b['bIdDoc'].',"idDoc":'.$b['bIdDoc'].',"url":"'.$b['bUrl'].'","idBU":'.$b['bTronc'].',"data":'.$b['bData'].'},';
 	    	}
 	    	$json = substr($json, 0, -1).']}';
 	    	return $json;    	 
@@ -357,7 +357,7 @@ class Flux_Bup8 extends Flux_Site{
 	
 	    	 */
 	    	$query = $this->dbD->select()
-	    	->from( array("d" => "flux_doc"), array("recid"=>"doc_id", "doc_id","titre","tronc", "url"))
+	    	->from( array("d" => "flux_doc"), array("recid"=>"doc_id", "doc_id","text"=>"titre","titre","tronc", "url"))
 	    	->setIntegrityCheck(false) //pour pouvoir sélectionner des colonnes dans une autre table
 	    	->joinInner(array('r' => 'flux_rapport'),'r.src_id = d.doc_id AND r.src_obj="doc" AND r.dst_obj = "tag"',array())
 	    	->joinInner(array('t' => 'flux_tag'),'t.code = "liste" AND t.tag_id = r.dst_id',array())

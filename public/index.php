@@ -27,11 +27,17 @@ set_include_path(ROOT_PATH.'/library');
 require_once( "bibtex-parser.php" );
 require_once( "CAS/CAS.php");
 
+echo APPLICATION_ENV."<br/>";
+echo APPLICATION_PATH."<br/>";
 
-// Create application, bootstrap, and run
+/* Create application, bootstrap, and run
 $application = new Zend_Application(
-    APPLICATION_ENV,
-    APPLICATION_PATH . '/configs/application.ini'
-);
+		APPLICATION_ENV,
+		APPLICATION_PATH . '/configs/application.ini'
+		);
+
 $application->bootstrap()
-            ->run();
+->run();
+*/
+
+echo "toto";

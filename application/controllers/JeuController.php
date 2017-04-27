@@ -17,5 +17,7 @@ class JeuController extends Zend_Controller_Action
 	    	//if(!$ssUti->uti)	$this->_redirect('excode');
     
     }
+        
+    
 }
 
