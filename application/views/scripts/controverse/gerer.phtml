@@ -65,6 +65,27 @@ var config = {
             { recid: 8, fname: 'Thomas', lname: 'Bahh', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
             { recid: 9, fname: 'Sergei', lname: 'Rachmaninov', email: 'jdoe@gmail.com', sdate: '4/3/2012' }
         ],
+	onAdd: function(event) {            
+            //affiche la popup
+            w2prompt({
+                label       : 'Ajouter une question',
+                value       : '',
+                attrs       : 'style="width: 200px"',
+                title       : w2utils.lang('Ajouter une question'),
+                ok_text     : w2utils.lang('Ok'),
+                cancel_text : w2utils.lang('Annuler'),
+                width       : 400,
+                height      : 200
+            })
+            .change(function (event) {
+                console.log('change', event);
+            })
+            .ok(function (event) {
+                console.log('ok', event);
+                ajouteQuestion(event);
+            });
+            
+	    },
         onClick: function(event) {
             var grid = this;
             var form = w2ui.form;
