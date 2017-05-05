@@ -83,7 +83,7 @@ var config = {
         }
     },
     form: { 
-        header: 'Edit Record',
+        header: 'Ajouter une liste',
         name: 'form',
         fields: [
             { name: 'recid', type: 'text', html: { caption: 'ID', attr: 'size="10" readonly' } },
@@ -113,7 +113,7 @@ var config = {
     },
     gridListe: { 
         name     : 'gridListe',
-		header: 'Les listes de la BU présentent dans ExplAgora',		
+		header: 'Les listes de la BU présentes dans ExplAgora',		
         show: { 
 			header			: true,		
             toolbar			: true,
@@ -208,6 +208,7 @@ var config = {
         name: 'gridLivre',
 		header: 'Livre de la liste',		
         show: {
+	    header	     : true,
             toolbar          : true,
             toolbarDelete    : false
         },
@@ -217,6 +218,18 @@ var config = {
             { field: 'titre', caption: 'Titre du livre', size: '30%', sortable: true, searchable: true  },
             { field: 'url', caption: 'Lien vers la fiche BU', size: '70%', sortable: true, searchable: true, editable: { type: 'text'} }
         ],
+	 toolbar: {
+            items: [
+                { id: 'voirLien', type: 'button', caption: 'Voir sur le site', icon: ' fa-external-link'},
+            ],
+            onClick: function (event) {
+                if (event.target == 'voirLien') {
+		            var id = w2ui.gridLivre.getSelection();
+		            var item = w2ui.gridLivre.get(id);
+                		open(item[0].url,"_blank")
+                }
+            }
+        },
         records: [],
         onClick: function(event) {
             var grid = this;
