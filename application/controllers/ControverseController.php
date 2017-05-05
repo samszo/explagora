@@ -12,7 +12,7 @@ class ControverseController extends Zend_Controller_Action
     
     public function gererAction()
     {
-	    	$this->view->idAuteur = 1;
+	    	$this->view->uti = "{'uti_id':1,'role':'admin'}";
     	 
     }    
     

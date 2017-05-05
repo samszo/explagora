@@ -11,9 +11,14 @@
 <div id="main" style="width: 100%; height: 800px;"></div>
 
 <script type="text/javascript">
-var idAuteur = <?php echo $this->idAuteur;?>;
+var uti = <?php echo $this->uti;?>;
+var rsListes, rsLivres;
 
-var listes, livres;
+
+//modification des propriétés globales
+//w2utils.locale('fr-fr');
+var btn = w2obj.grid.prototype.buttons;
+btn['add'].caption     = 'Ajouter';
 
 
 // widget configuration
@@ -106,38 +111,111 @@ var config = {
             }
         }
     },
+    gridListe: { 
+        name     : 'gridListe',
+		header: 'Les listes de la BU présentent dans ExplAgora',		
+        show: { 
+			header			: true,		
+            toolbar			: true,
+			toolbarReload   : true,
+			toolbarColumns  : true,
+            	toolbarSearch   : true,
+            	toolbarAdd      : true,
+            	toolbarDelete   : uti.role=="lecteur" ? false : true,
+            	selectColumn		: false,
+            	footer: true,
+        },
+        columns: [      
+            { field: 'recid', hidden:true, caption: 'ID', size: '50px', sortable: true, resizable: true },
+            { field: 'text', caption: 'Titre de la liste', size: '40%', sortable: true, resizable: true},		            
+            { field: 'url', caption: 'Lien vers le site de la BU', size: '60%', sortable: true, resizable: true, editable: { type: 'text'}},
+        ],
+        toolbar: {
+            items: [
+                { id: 'voirLien', type: 'button', caption: 'Voir sur le site', icon: ' fa-external-link'},
+            ],
+            onClick: function (event) {
+                if (event.target == 'voirLien') {
+		            var id = w2ui.gridListe.getSelection();
+		            var item = w2ui.gridListe.get(id);
+                		open(item[0].url,"_blank")
+                }
+            }
+        },        
+        records: rsListes,        
+        onRender: function(event) {
+        		w2ui.gridListe.lock('Chargement...', true);	
+        		event.onComplete = function () {
+        			w2ui.gridListe.unlock();
+        	    }		        
+        },
+        onDelete: function(event) {
+            /*            
+			var p = {id:itemSelect.recid, obj:'livre'};
+			if(event.force){						
+				var g = w2ui[event.target];
+	            	$.get('crud/delete',
+					p,
+	            		function(js){
+	            			finsession(js);
+						g.add(itemSelect);
+	            			w2alert(js.message);
+	           		},"json");
+			}
+			*/
+	    },
+        onAdd: function(event) {            
+            //affiche la popup
+            w2prompt({
+                label       : 'N° de la liste',
+                value       : '',
+                attrs       : 'style="width: 200px"',
+                title       : w2utils.lang('Ajouter une liste dans ExplAgora'),
+                ok_text     : w2utils.lang('Ok'),
+                cancel_text : w2utils.lang('Annuler'),
+                width       : 400,
+                height      : 200
+            })
+            .change(function (event) {
+                console.log('change', event);
+            })
+            .ok(function (event) {
+                console.log('ok', event);
+                ajouteListe(event);
+            });
+            
+	    },
+        onClick: function (event) {
+            var itemSelect = this.get(event.recid);
+            chargeLivre(itemSelect.tronc);          			           		           
+        }	
+    },    
     formListe: { 
         name     : 'formListe',
         fields: [
             { field: 'Listes disponibles',html: { attr: 'style="width: 100%;"' }, type: 'list', required: true, 
-                options: { items: listes } },
+                options: { items: rsListes } },
             { field: 'N° de la liste à ajouter', type: 'text', required: false },
         ],
         actions: {
         },
         onChange: function (event) {
             console.log(event);
-            var url = "../bup8?obj=getListeLivre&idListe="+event.value_new.tronc;
-	        	$.getJSON(url, function( data ) {
-		        	console.log(data);
-		        	livres = data;
-		        	w2ui['gridLivre'].clear();
-		        	w2ui['gridLivre'].add( livres.livres);			        	
-	        	});
-                
-            
+            chargeLivre(event.value_new.tronc)
         }
     },
     gridLivre: { 
         name: 'gridLivre',
+		header: 'Livre de la liste',		
         show: {
             toolbar          : true,
-            toolbarDelete    : true
+            toolbarDelete    : false
         },
         columns: [
-            { field: 'recid', caption: 'id BU P8', size: '33%', sortable: true, searchable: true },
-            { field: 'idDoc', caption: 'id ExplAgore', size: '33%', sortable: true, searchable: true },
-            { field: 'titre', caption: 'Titre du livre', size: '33%', sortable: true, searchable: true  }
+            { field: 'recid', hidden:true, caption: 'id BU P8', size: '33%', sortable: true, searchable: true },
+            { field: 'idDoc', hidden:true, caption: 'id ExplAgore', size: '33%', sortable: true, searchable: true },
+            { field: 'titre', caption: 'Titre du livre', size: '30%', sortable: true, searchable: true  },
+            { field: 'url', caption: 'Lien vers la fiche BU', size: '70%', sortable: true, searchable: true, editable: { type: 'text'} }
         ],
         records: [],
         onClick: function(event) {
@@ -163,19 +241,62 @@ $(function () {
 
 	$.getJSON( "../bup8?obj=getListe", function( data ) {
 					
-		listes = data;
-		config.formListe.fields[0].options.items = listes;
+		rsListes = data;
+		//config.formListe.fields[0].options.items = listes;
 	    // initialization
 	    
 	    $('#main').w2layout(config.layoutMain);
 	    w2ui.layoutMain.content('top', $().w2layout(config.layoutTop));
 	    w2ui.layoutMain.content('left', $().w2grid(config.grid));
 	    w2ui.layoutMain.content('main', $().w2form(config.form));
-		w2ui.layoutTop.content('left', $().w2form(config.formListe));
+		//w2ui.layoutTop.content('left', $().w2form(config.formListe));
+		w2ui.layoutTop.content('left', $().w2grid(config.gridListe));
 		w2ui.layoutTop.content('main', $().w2grid(config.gridLivre));
+
+		
+	    	w2ui['gridListe'].clear();
+	    	w2ui['gridListe'].add( rsListes);			        	
+		
 	});
 	    
 });
+
+function chargeLivre(tronc){
+    var url = "../bup8?obj=getListeLivre&idListe="+tronc;
+	$.getJSON(url, function( data ) {
+	    	console.log(data);
+	    rsLivres = data;
+		//format la liste
+
+	    
+	    	w2ui['gridLivre'].clear();
+	    	w2ui['gridLivre'].add( rsLivres.livres);			        	
+	});                            
+	
+}
+
+function ajouteListe(id){
+    var url = "../bup8?obj=setListe&idListe="+id;
+	$.getJSON(url, function( data ) {
+	    	chargeListes();		        	
+	    rsLivres = data;
+		//format la liste	    
+	    	w2ui['gridLivre'].clear();
+	    	w2ui['gridLivre'].add( rsLivres.livres);	
+	});                            
+	
+}
+
+function chargeListes(){
+	$.getJSON( "../bup8?obj=getListe", function( data ) {		
+		rsListes = data;
+	    	w2ui['gridListe'].clear();
+	    	w2ui['gridListe'].add( rsListes);			        	
+		
+	});
+	
+}
+
 </script>
 
 </body>
