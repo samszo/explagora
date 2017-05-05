@@ -13,14 +13,10 @@
 <script type="text/javascript">
 var uti = <?php echo $this->uti;?>;
 var rsListes, rsLivres;
-
-
 //modification des propriétés globales
 //w2utils.locale('fr-fr');
 var btn = w2obj.grid.prototype.buttons;
 btn['add'].caption     = 'Ajouter';
-
-
 // widget configuration
 var config = {
     layoutMain: {
@@ -36,7 +32,7 @@ var config = {
         name: 'layoutTop',
         padding: 4,
         panels: [
-            { type: 'top', size: '100px', resizable: false, content: '<h1>Gérer les controverses</h1>'  },
+            { type: 'top', size: '100px', resizable: false, content: '<h1 align="center">Gérer les controverses</h1>'  },
             { type: 'left', size: '50%', resizable: true, minSize: 300},
             { type: 'main', size: '50%', minSize: 300   }
         ]
@@ -45,7 +41,8 @@ var config = {
         name: 'grid',
         show: {
             toolbar          : true,
-            toolbarDelete    : true
+            toolbarDelete    : true,
+			toolbarAdd      : true,
         },
         columns: [
             { field: 'question', caption: 'Votre question', size: '33%', sortable: true, searchable: true },
@@ -68,10 +65,10 @@ var config = {
 	onAdd: function(event) {            
             //affiche la popup
             w2prompt({
-                label       : 'Ajouter une question',
+                label       : 'Ajouter un indice',
                 value       : '',
                 attrs       : 'style="width: 200px"',
-                title       : w2utils.lang('Ajouter une question'),
+                title       : w2utils.lang('Ajouter un indice'),
                 ok_text     : w2utils.lang('Ok'),
                 cancel_text : w2utils.lang('Annuler'),
                 width       : 400,
@@ -86,7 +83,7 @@ var config = {
             });
             
 	    },
-        onClick: function(event) {
+    onClick: function(event) {
             var grid = this;
             var form = w2ui.form;
             console.log(event);
@@ -104,14 +101,15 @@ var config = {
         }
     },
     form: { 
-        header: 'Ajouter une liste',
+        header: 'Ajouter une question',
         name: 'form',
         fields: [
             { name: 'recid', type: 'text', html: { caption: 'ID', attr: 'size="10" readonly' } },
-            { name: 'fname', type: 'text', required: true, html: { caption: 'First Name', attr: 'size="40" maxlength="40"' } },
-            { name: 'lname', type: 'text', required: true, html: { caption: 'Last Name', attr: 'size="40" maxlength="40"' } },
-            { name: 'email', type: 'email', html: { caption: 'Email', attr: 'size="30"' } },
-            { name: 'sdate', type: 'date', html: { caption: 'Date', attr: 'size="10"' } }
+            { name: 'question', type: 'text', html: { caption: 'Votre question', attr: 'size="100" maxlength="40"' } },
+			{ name: 'indice1', type: 'text', html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice2', type: 'text', html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
         ],
         actions: {
             Reset: function () {
@@ -270,9 +268,7 @@ var config = {
         }
     }           
 };
-
 $(function () {
-
 	$.getJSON( "../bup8?obj=getListe", function( data ) {
 					
 		rsListes = data;
@@ -286,7 +282,6 @@ $(function () {
 		//w2ui.layoutTop.content('left', $().w2form(config.formListe));
 		w2ui.layoutTop.content('left', $().w2grid(config.gridListe));
 		w2ui.layoutTop.content('main', $().w2grid(config.gridLivre));
-
 		
 	    	w2ui['gridListe'].clear();
 	    	w2ui['gridListe'].add( rsListes);			        	
@@ -294,21 +289,18 @@ $(function () {
 	});
 	    
 });
-
 function chargeLivre(tronc){
     var url = "../bup8?obj=getListeLivre&idListe="+tronc;
 	$.getJSON(url, function( data ) {
 	    	console.log(data);
 	    rsLivres = data;
 		//format la liste
-
 	    
 	    	w2ui['gridLivre'].clear();
 	    	w2ui['gridLivre'].add( rsLivres.livres);			        	
 	});                            
 	
 }
-
 function ajouteListe(id){
     var url = "../bup8?obj=setListe&idListe="+id;
 	$.getJSON(url, function( data ) {
@@ -320,7 +312,6 @@ function ajouteListe(id){
 	});                            
 	
 }
-
 function chargeListes(){
 	$.getJSON( "../bup8?obj=getListe", function( data ) {		
 		rsListes = data;
@@ -330,7 +321,6 @@ function chargeListes(){
 	});
 	
 }
-
 </script>
 
 </body>
