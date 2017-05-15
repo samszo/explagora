@@ -47,22 +47,20 @@ var config = {
 			toolbarAdd      : true,
         },
         columns: [
+            { field: 'idAuteur', caption: 'idAuteur', hidden: true },
+            { field: 'nomAuteur', caption: 'idAuteur', caption: "Nom de l'auteur", size: '33%', sortable: true, searchable: true},
+            { field: 'idListe', caption: 'idListe', hidden: true },
+            { field: 'titreListe', caption: 'Titre de la liste', size: '33%', sortable: true, searchable: true},
+            { field: 'idDoc', caption: 'idDoc', hidden: true },
+            { field: 'titreLivre', caption: 'Titre du livre', size: '33%', sortable: true, searchable: true},
             { field: 'question', caption: 'Votre question', size: '33%', sortable: true, searchable: true },
             { field: 'indice1', caption: 'Indice 1', size: '33%', sortable: true, searchable: true },
             { field: 'indice2', caption: 'Indice 2', size: '33%' },
-            { field: 'indice3', caption: 'Indice 3', size: '33%', render: 'date' },
-            { field: 'indice4', caption: 'Indice 4', size: '33%', render: 'date' }
+            { field: 'indice3', caption: 'Indice 3', size: '33%' },
+            { field: 'indice4', caption: 'Indice 4', size: '33%' }
+            
         ],
         records: [
-            { recid: 1, fname: 'John', lname: 'Doe', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 2, fname: 'Stuart', lname: 'Motzart', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 3, fname: 'Jin', lname: 'Franson', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 4, fname: 'Susan', lname: 'Ottie', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 5, fname: 'Kelly', lname: 'Silver', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 6, fname: 'Francis', lname: 'Gatos', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 7, fname: 'Mark', lname: 'Welldo', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 8, fname: 'Thomas', lname: 'Bahh', email: 'jdoe@gmail.com', sdate: '4/3/2012' },
-            { recid: 9, fname: 'Sergei', lname: 'Rachmaninov', email: 'jdoe@gmail.com', sdate: '4/3/2012' }
         ],
 	onAdd: function(event) {            
             //affiche la popup
@@ -106,8 +104,13 @@ var config = {
         header: 'Ajouter une question et les indices',
         name: 'form',
         fields: [
-            { name: 'recid', type: 'text', html: { caption: 'ID', attr: 'size="10" readonly' } },
-            { name: 'question', type: 'text', html: { caption: 'Votre question', attr: 'size="100" maxlength="40"' } },
+	    		{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
+        		{ name: 'titreListe', type: 'text', html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
+            { name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
+            { name: 'titreLivre', type: 'text', html: { caption: 'Titre du livre', attr: 'size="80" readonly' } },
+            { name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
+            { name: 'nomAuteur', type: 'text', html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
+            { name: 'question', type: 'text', html: { caption: 'Votre question', attr: 'size="80" maxlength="200"' } },
 			{ name: 'indice1', type: 'text', html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
 			{ name: 'indice2', type: 'text', html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
 			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
@@ -120,15 +123,8 @@ var config = {
             Save: function () {
                 var errors = this.validate();
                 if (errors.length > 0) return;
-                if (this.recid == 0) {
-                    w2ui.grid.add($.extend(true, { recid: w2ui.grid.records.length + 1 }, this.record));
-                    w2ui.grid.selectNone();
-                    this.clear();
-                } else {
-                    w2ui.grid.set(this.recid, this.record);
-                    w2ui.grid.selectNone();
-                    this.clear();
-                }
+				//enregistre les données dans la base
+				ajouteControverse(this.record);
             }
         }
     },
@@ -257,11 +253,24 @@ var config = {
             var form = w2ui.form;
             console.log(event);
             event.onComplete = function () {
+                //récupère les données du livre
                 var sel = grid.getSelection();
+                var livre = grid.get(sel)[0];
+                //récupère les données de la liste
+                var liste = w2ui.gridListe.get(w2ui.gridListe.getSelection())[0];
                 console.log(sel);
+                //construction des donnée
+                var data ={
+                		idListe:liste.recid,
+                		titreListe:liste.titre,
+                		idLivre:livre.recid,
+                		titreLivre:livre.titre,
+                		idAuteur:uti.idUti,
+                		nomAuteur:uti.nom
+                };                
                 if (sel.length == 1) {
-                    form.recid  = sel[0];
-                    form.record = $.extend(true, {}, grid.get(sel[0]));
+                    //form.record = $.extend(true, {}, itemSelect);
+                    form.record = data;
                     form.refresh();
                 } else {
                     form.clear();
@@ -323,6 +332,18 @@ function chargeListes(){
 	});
 	
 }
+
+function ajouteControverse(data){
+    var url = "../controverse/creer";
+    var dt = {"table":"controverse","data":data};
+	$.getJSON(url, dt, function( rep ) {
+		console.log(rep);
+        w2ui.grid.add($.extend(true, { recid: w2ui.grid.records.length + 1 }, this.record));
+        w2ui.grid.selectNone();
+	});                            
+	
+}
+
 </script>
 
 </body>
