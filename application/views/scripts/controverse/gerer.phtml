@@ -12,150 +12,276 @@
 
 <script type="text/javascript">
 var uti = <?php echo $this->uti;?>;
-var rsListes, rsLivres;
+var rsListes, rsLivres, rsProblemes, dataFormProbleme;
+var itemListe, itemLivre, itemProb, itemReponse;
+
 //modification des propriétés globales
 //w2utils.locale('fr-fr');
 var btn = w2obj.grid.prototype.buttons;
 btn['add'].caption     = 'Ajouter';
+
+var optGridShow = {header:true,		
+	toolbar:true,
+	toolbarReload:true,
+	toolbarColumns:true,
+	toolbarSearch:true,
+	toolbarAdd:false,
+	toolbarDelete:uti.role=="lecteur" ? false : false,
+	selectColumn	:false,
+	footer: true};
+
+
+
 // widget configuration
 var config = {
     layoutMain: {
         name: 'layoutMain',
         padding: 4,
         panels: [
-            { type: 'top', size: '300px', resizable: false},
+            { type: 'top', size: '60px', resizable: false, content: '<h1 align="center">Gérer les controverses</h1>'},
             { type: 'left', size: '50%', resizable: true, minSize: 300 },
             { type: 'main', minSize: 300 }
         ]
     },
-    layoutTop: {
-        name: 'layoutTop',
+    layoutContro: {
+        name: 'layoutContro',
         padding: 4,
         panels: [
-            { type: 'top', size: '100px', resizable: false, content: '<h1 align="center">Gérer les controverses</h1>'  },
-            { type: 'left', size: '50%', resizable: true, minSize: 300},
-            { type: 'main', size: '50%', minSize: 300   }
+            { type: 'top', size: '50%', resizable: true  },
+            { type: 'main', size: '50%', resizable: true}
         ]
     },
-    grid: { 
-        name: 'grid',
-		header: 'Vos question et vos indices',
-        show: {
-			header			: true,
-            toolbar          : true,
-            toolbarDelete    : true,
-			toolbarAdd      : true,
-        },
+    layoutBU: {
+        name: 'layoutBU',
+        padding: 4,
+        panels: [
+            { type: 'left', size: '60%', resizable: true},
+            { type: 'main', size: '40%', resizable: true}
+        ]
+    },
+    gridProbleme: { 
+        name: 'gridProbleme',
+		header: 'Les problèmes disponibles',
+        show: optGridShow,
+        /*
+		{"recid":"1","doc_id_liste":"186","titreListe":"Jeux en biblioth\u00e8que"
+		,"doc_id_livre":"188","titreLivre":"Serious game"
+		,"uti_id_auteur":"1","login":"explagora"
+		,"idQuestion":"2","valeur":"Une bonne question"
+		,"idsC":"3,1,2","valids":"1,1,0","idsInd":"6,4,5","valInd":"lkjlkj lkjlkj ,12,jjhjkh jkh "
+		,"nbReponse":"0"
+		,"idC0":"3","idInd0":"6","valInd0":"lkjlkj lkjlkj ","validInd0":"1"
+		,"idC1":"1","idInd1":"4","valInd1":"12","validInd1":"1"
+		,"idC2":"2","idInd2":"5","valInd2":"jjhjkh jkh ","validInd2":"0"}       
+        */
         columns: [
-            { field: 'idAuteur', caption: 'idAuteur', hidden: true },
-            { field: 'nomAuteur', caption: 'idAuteur', caption: "Nom de l'auteur", size: '33%', sortable: true, searchable: true},
-            { field: 'idListe', caption: 'idListe', hidden: true },
-            { field: 'titreListe', caption: 'Titre de la liste', size: '33%', sortable: true, searchable: true},
-            { field: 'idDoc', caption: 'idDoc', hidden: true },
-            { field: 'titreLivre', caption: 'Titre du livre', size: '33%', sortable: true, searchable: true},
-            { field: 'question', caption: 'Votre question', size: '33%', sortable: true, searchable: true },
-            { field: 'indice1', caption: 'Indice 1', size: '33%', sortable: true, searchable: true },
-            { field: 'indice2', caption: 'Indice 2', size: '33%' },
-            { field: 'indice3', caption: 'Indice 3', size: '33%' },
-            { field: 'indice4', caption: 'Indice 4', size: '33%' }
+            { field: 'recid', caption: 'recid', hidden: true },
+            { field: 'uti_id_auteur', caption: 'idAuteur', hidden: true },
+            { field: 'login', caption: "Nom de l'auteur", size: '33%', sortable: true},
+            { field: 'doc_id_liste', caption: 'idListe', hidden: true },
+            { field: 'titreListe', caption: 'Titre de la liste', size: '33%', sortable: true},
+            { field: 'titreLivre', caption: 'Titre du livre', size: '33%', sortable: true},
+            { field: 'valeur', caption: 'Votre question', size: '60%', sortable: true },
+            { field: 'nbReponse', caption: 'Nb de réponse', size: '33%', sortable: true},
+            { field: 'valInd0', caption: 'Indice 1', size: '33%', sortable: true },
+            { field: 'valInd1', caption: 'Indice 2', size: '33%' },
+            { field: 'valInd2', caption: 'Indice 3', size: '33%' },
+            { field: 'valInd3', caption: 'Indice 4', size: '33%' }
             
         ],
+        toolbar: {
+            items: [
+                { id: 'ajoutProb', type: 'button', caption: 'Ajouter un problème', icon: ' fa-external-link'},
+            ],
+            onClick: function (event) {
+                if (event.target == 'ajoutProb') {
+		            var idListe = w2ui.gridListe.getSelection();
+		            if(!idListe.length){
+			             w2alert('Veuillez sélectionner une liste.').ok(function () { console.log('ok'); });
+			             return;
+		            }           
+		            var idLivre = w2ui.gridLivre.getSelection();
+		            if(!idLivre.length){
+			             w2alert('Veuillez sélectionner un livre.').ok(function () { console.log('ok'); });
+			             return;
+		            }
+		            itemListe = w2ui.gridListe.get(idListe[0]);
+		            itemLivre = w2ui.gridListe.get(idLivre[0]);
+		            showFormProbleme();
+                }
+            }
+        },          
         records: [
         ],
-	onAdd: function(event) {            
-            //affiche la popup
-            w2prompt({
-                label       : 'Ajouter un indice',
-                value       : '',
-                attrs       : 'style="width: 200px"',
-                title       : w2utils.lang('Ajouter un indice'),
-                ok_text     : w2utils.lang('Ok'),
-                cancel_text : w2utils.lang('Annuler'),
-                width       : 400,
-                height      : 200
-            })
-            .change(function (event) {
-                console.log('change', event);
-            })
-            .ok(function (event) {
-                console.log('ok', event);
-                ajouteQuestion(event);
-            });
-            
+		onAdd: function(event) {            
 	    },
-    onClick: function(event) {
+	    onClick: function(event) {
             var grid = this;
             var form = w2ui.form;
             console.log(event);
             event.onComplete = function () {
-                var sel = grid.getSelection();
+                var sel = gridProbleme.getSelection();
                 console.log(sel);
-                if (sel.length == 1) {
-                    form.recid  = sel[0];
-                    form.record = $.extend(true, {}, grid.get(sel[0]));
-                    form.refresh();
-                } else {
-                    form.clear();
-                }
             }
         }
     },
-    form: { 
-        header: 'Ajouter une question et les indices',
-        name: 'form',
-        fields: [
-	    		{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
-        		{ name: 'titreListe', type: 'text', html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
-            { name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
-            { name: 'titreLivre', type: 'text', html: { caption: 'Titre du livre', attr: 'size="80" readonly' } },
-            { name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
-            { name: 'nomAuteur', type: 'text', html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
-            { name: 'question', type: 'text', html: { caption: 'Votre question', attr: 'size="80" maxlength="200"' } },
-			{ name: 'indice1', type: 'text', html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'indice2', type: 'text', html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
-        ],
-        actions: {
-            Reset: function () {
-                this.clear();
-            },
-            Save: function () {
-                var errors = this.validate();
-                if (errors.length > 0) return;
-				//enregistre les données dans la base
-				ajouteControverse(this.record);
-            }
-        }
-    },
-    gridListe: { 
-        name     : 'gridListe',
-		header: 'Les listes de la BU présentes dans ExplAgora',		
-        show: { 
-			header			: true,		
-            toolbar			: true,
-			toolbarReload   : true,
-			toolbarColumns  : true,
-            	toolbarSearch   : true,
-            	toolbarAdd      : true,
-            	toolbarDelete   : uti.role=="lecteur" ? false : true,
-            	selectColumn		: false,
-            	footer: true,
-        },
-        columns: [      
-            { field: 'recid', hidden:true, caption: 'ID', size: '50px', sortable: true, resizable: true },
-            { field: 'text', caption: 'Titre de la liste', size: '40%', sortable: true, resizable: true},		            
-            { field: 'url', caption: 'Lien vers le site de la BU', size: '60%', sortable: true, resizable: true, editable: { type: 'text'}},
+    gridReponse: { 
+        name: 'gridReponse',
+		header: 'Les réponses au problème',
+        show: optGridShow,
+        /*
+		{"recid":"1","doc_id_liste":"186","titreListe":"Jeux en biblioth\u00e8que"
+		,"doc_id_livre":"188","titreLivre":"Serious game"
+		,"uti_id_auteur":"1","login":"explagora"
+		,"idQuestion":"2","valeur":"Une bonne question"
+		,"idsC":"3,1,2","valids":"1,1,0","idsInd":"6,4,5","valInd":"lkjlkj lkjlkj ,12,jjhjkh jkh "
+		,"nbReponse":"0"
+		,"idC0":"3","idInd0":"6","valInd0":"lkjlkj lkjlkj ","validInd0":"1"
+		,"idC1":"1","idInd1":"4","valInd1":"12","validInd1":"1"
+		,"idC2":"2","idInd2":"5","valInd2":"jjhjkh jkh ","validInd2":"0"}       
+        */
+        columns: [
+            { field: 'recid', caption: 'recid', hidden: true },
+            { field: 'uti_id_jouer', caption: 'idJoueur', hidden: true },
+            { field: 'login', caption: "Nom du joueur", size: '33%', sortable: true},
+            { field: 'valeur', caption: 'Réponse', size: '33%', sortable: true },
+            { field: 'created', caption: 'Date', size: '33%' }            
         ],
         toolbar: {
             items: [
-                { id: 'voirLien', type: 'button', caption: 'Voir sur le site', icon: ' fa-external-link'},
+                { id: 'ajoutRep', type: 'button', caption: 'Ajouter une réponse', icon: ' fa-external-link'},
+            ],
+            onClick: function (event) {
+                if (event.target == 'ajoutRep') {
+		            var idProb = w2ui.gridProbleme.getSelection();
+		            if(!idProb.length){
+			             w2alert('Veuillez sélectionner un problème.').ok(function () { console.log('ok'); });
+			             return;
+		            }           
+		            var itemProb = w2ui.gridProbleme.get(idProb[0]);
+		            showFormRep(itemProb);
+                }
+            }
+        },          
+        records: [
+        ],
+		onAdd: function(event) {            
+	    },
+	    onClick: function(event) {
+            var grid = this;
+            var form = w2ui.form;
+            console.log(event);
+            event.onComplete = function () {
+                var sel = gridProbleme.getSelection();
+                console.log(sel);
+            }
+        }
+    },    
+    formReponse: { 
+        header: 'Veuillez remplir les champs obligatoires.',
+        name: 'formReponse',
+        fields: [
+	    		//{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
+        		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
+            //{ name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
+            { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
+            //{ name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
+            { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
+            { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
+			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
+        ],
+        actions: {
+            Annuler: function () {
+                this.clear();
+            },
+            Valider: function () {
+                var errors = this.validate();
+                if (errors.length > 0) return;
+				//enregistre les données dans la base
+				ajouteProbleme(w2ui['formProbleme'].record);
+            }
+        }
+    },
+    formProbleme: { 
+        header: 'Veuillez remplir les champs obligatoires.',
+        name: 'formProbleme',
+        fields: [
+	    		//{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
+        		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
+            //{ name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
+            { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
+            //{ name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
+            { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
+            { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
+			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
+        ],
+        actions: {
+            Annuler: function () {
+                this.clear();
+            },
+            Valider: function () {
+                var errors = this.validate();
+                if (errors.length > 0) return;
+				//enregistre les données dans la base
+				ajouteProbleme(w2ui['formProbleme'].record);
+            }
+        }
+    },    
+    gridListe: { 
+        name     : 'gridListe',
+		header: 'Les listes de la BU présentes dans ExplAgora',		
+        show: optGridShow,
+        columns: [      
+            { field: 'recid', hidden:true, caption: 'ID', size: '50px', sortable: true, resizable: true },
+            { field: 'text', caption: 'Titre de la liste', size: '40%', sortable: true, resizable: true},		            
+            { field: 'url', hidden:true, caption: 'Lien vers le site de la BU', size: '60%', sortable: true, resizable: true, editable: { type: 'text'}},
+        ],
+        toolbar: {
+            items: [
+                { id: 'voirLien', type: 'button', caption: 'Voir le détail', icon: ' fa-external-link'},
+                { id: 'ajoutListe', type: 'button', caption: 'Ajouter une liste', icon: ' fa-external-link'},
             ],
             onClick: function (event) {
                 if (event.target == 'voirLien') {
 		            var id = w2ui.gridListe.getSelection();
+		            if(!id) w2alert('Veuillez sélectionner une liste.').ok(function () { console.log('ok'); });
+
 		            var item = w2ui.gridListe.get(id);
                 		open(item[0].url,"_blank")
+                }
+                if (event.target == 'ajoutListe') {
+                    //affiche la popup
+                    w2prompt({
+                        label       : 'N° de la liste',
+                        value       : '',
+                        attrs       : 'style="width: 200px"',
+                        title       : w2utils.lang('Ajouter une liste dans ExplAgora'),
+                        ok_text     : w2utils.lang('Ok'),
+                        cancel_text : w2utils.lang('Annuler'),
+                        width       : 400,
+                        height      : 200
+                    })
+                    .change(function (event) {
+                        console.log('change', event);
+                    })
+                    .ok(function (event) {
+                        console.log('ok', event);
+                        ajouteListe(event);
+                    });
                 }
             }
         },        
@@ -167,39 +293,8 @@ var config = {
         	    }		        
         },
         onDelete: function(event) {
-            /*            
-			var p = {id:itemSelect.recid, obj:'livre'};
-			if(event.force){						
-				var g = w2ui[event.target];
-	            	$.get('crud/delete',
-					p,
-	            		function(js){
-	            			finsession(js);
-						g.add(itemSelect);
-	            			w2alert(js.message);
-	           		},"json");
-			}
-			*/
 	    },
         onAdd: function(event) {            
-            //affiche la popup
-            w2prompt({
-                label       : 'N° de la liste',
-                value       : '',
-                attrs       : 'style="width: 200px"',
-                title       : w2utils.lang('Ajouter une liste dans ExplAgora'),
-                ok_text     : w2utils.lang('Ok'),
-                cancel_text : w2utils.lang('Annuler'),
-                width       : 400,
-                height      : 200
-            })
-            .change(function (event) {
-                console.log('change', event);
-            })
-            .ok(function (event) {
-                console.log('ok', event);
-                ajouteListe(event);
-            });
             
 	    },
         onClick: function (event) {
@@ -224,20 +319,16 @@ var config = {
     gridLivre: { 
         name: 'gridLivre',
 		header: 'Livre de la liste',		
-        show: {
-	    header	     : true,
-            toolbar          : true,
-            toolbarDelete    : false
-        },
+        show: optGridShow,
         columns: [
-            { field: 'recid', hidden:true, caption: 'id BU P8', size: '33%', sortable: true, searchable: true },
-            { field: 'idDoc', hidden:true, caption: 'id ExplAgore', size: '33%', sortable: true, searchable: true },
-            { field: 'titre', caption: 'Titre du livre', size: '30%', sortable: true, searchable: true  },
-            { field: 'url', caption: 'Lien vers la fiche BU', size: '70%', sortable: true, searchable: true, editable: { type: 'text'} }
+            { field: 'recid', hidden:true, caption: 'id BU P8', size: '33%', sortable: true },
+            { field: 'idDoc', hidden:true, caption: 'id ExplAgore', size: '33%', sortable: true },
+            { field: 'titre', caption: 'Titre du livre', size: '30%', sortable: true  },
+            { field: 'url', hidden:true, caption: 'Lien vers la fiche BU', size: '70%', sortable: true, editable: { type: 'text'} }
         ],
-	 toolbar: {
+	 	toolbar: {
             items: [
-                { id: 'voirLien', type: 'button', caption: 'Voir sur le site', icon: ' fa-external-link'},
+                { id: 'voirLien', type: 'button', caption: 'Voir le détail', icon: ' fa-external-link'},
             ],
             onClick: function (event) {
                 if (event.target == 'voirLien') {
@@ -260,7 +351,7 @@ var config = {
                 var liste = w2ui.gridListe.get(w2ui.gridListe.getSelection())[0];
                 console.log(sel);
                 //construction des donnée
-                var data ={
+                dataFormProbleme = {
                 		idListe:liste.recid,
                 		titreListe:liste.titre,
                 		idLivre:livre.recid,
@@ -268,13 +359,6 @@ var config = {
                 		idAuteur:uti.idUti,
                 		nomAuteur:uti.nom
                 };                
-                if (sel.length == 1) {
-                    //form.record = $.extend(true, {}, itemSelect);
-                    form.record = data;
-                    form.refresh();
-                } else {
-                    form.clear();
-                }
             }
         }
     }           
@@ -283,20 +367,32 @@ $(function () {
 	$.getJSON( "../bup8?obj=getListe", function( data ) {
 					
 		rsListes = data;
-		//config.formListe.fields[0].options.items = listes;
-	    // initialization
 	    
-	    $('#main').w2layout(config.layoutMain);
-	    w2ui.layoutMain.content('top', $().w2layout(config.layoutTop));
-	    w2ui.layoutMain.content('left', $().w2grid(config.grid));
-	    w2ui.layoutMain.content('main', $().w2form(config.form));
-		//w2ui.layoutTop.content('left', $().w2form(config.formListe));
-		w2ui.layoutTop.content('left', $().w2grid(config.gridListe));
-		w2ui.layoutTop.content('main', $().w2grid(config.gridLivre));
-		
-	    	w2ui['gridListe'].clear();
-	    	w2ui['gridListe'].add( rsListes);			        	
-		
+	    //récupère les questions
+		$.getJSON( "../controverse/probleme", function( data1 ) {
+			rsProblemes = data1;
+			
+			//initialisation des objet w2ui
+		    $('#main').w2layout(config.layoutMain);
+		    w2ui.layoutMain.content('left', $().w2layout(config.layoutBU));
+		    w2ui.layoutMain.content('main', $().w2layout(config.layoutContro));
+
+		    w2ui.layoutContro.content('top', $().w2grid(config.gridProbleme));
+
+			w2ui.layoutBU.content('left', $().w2grid(config.gridListe));
+			w2ui.layoutBU.content('main', $().w2grid(config.gridLivre));
+
+		    $().w2form(config.formProbleme);
+
+			//chargement des données
+		    	w2ui['gridProbleme'].clear();
+		    	w2ui['gridProbleme'].add(rsProblemes);			        	
+
+		    	w2ui['gridListe'].clear();
+		    	w2ui['gridListe'].add(rsListes);			        	
+		    	
+		});
+	    		
 	});
 	    
 });
@@ -333,16 +429,69 @@ function chargeListes(){
 	
 }
 
-function ajouteControverse(data){
+function ajouteProbleme(data){
     var url = "../controverse/creer";
-    var dt = {"table":"controverse","data":data};
+    var dt = {"table":"probleme","data":data};
 	$.getJSON(url, dt, function( rep ) {
 		console.log(rep);
-        w2ui.grid.add($.extend(true, { recid: w2ui.grid.records.length + 1 }, this.record));
-        w2ui.grid.selectNone();
+        w2alert('Le problème est ajouté.').ok(function () { console.log('ok'); });		
+        w2ui.gridProbleme.add(rep);
+        w2ui.gridProbleme.selectNone();
 	});                            
 	
 }
+function showFormProbleme(){
+	$().w2popup('open', {
+        title   : "Ajout d'un problème",
+        body    : '<div id="form" style="width: 100%; height: 100%;"></div>',
+        style   : 'padding: 15px 0px 0px 0px',
+        width   : 600,
+        height  : 800, 
+        showMax : true,
+        onToggle: function (event) {
+            $(w2ui.formProbleme.box).hide();
+            event.onComplete = function () {
+                $(w2ui.formProbleme.box).show();
+                w2ui.formProbleme.resize();
+            }
+        },
+        onOpen: function (event) {
+            event.onComplete = function () {
+                // specifying an onOpen handler instead is equivalent to specifying an onBeforeOpen handler, which would make this code execute too early and hence not deliver.
+                w2ui.formProbleme.record = dataFormProbleme;
+                w2ui.formProbleme.refresh();                
+                $('#w2ui-popup #form').w2render('formProbleme');
+            }
+        }
+    });	
+}
+
+showFormRep(itemProb){
+	$().w2popup('open', {
+        title   : "Ajout d'une réponse",
+        body    : '<div id="form" style="width: 100%; height: 100%;"></div>',
+        style   : 'padding: 15px 0px 0px 0px',
+        width   : 600,
+        height  : 800, 
+        showMax : true,
+        onToggle: function (event) {
+            $(w2ui.formReponse.box).hide();
+            event.onComplete = function () {
+                $(w2ui.formReponse.box).show();
+                w2ui.formReponse.resize();
+            }
+        },
+        onOpen: function (event) {
+            event.onComplete = function () {
+                // specifying an onOpen handler instead is equivalent to specifying an onBeforeOpen handler, which would make this code execute too early and hence not deliver.
+                w2ui.formReponse.record = dataFormReponse;
+                w2ui.formReponse.refresh();                
+                $('#w2ui-popup #form').w2render('formReponse');
+            }
+        }
+    });	
+}
+
 
 </script>
 

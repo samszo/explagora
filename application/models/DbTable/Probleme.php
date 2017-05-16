@@ -1,6 +1,6 @@
 <?php
 /**
- * Classe ORM qui représente la table '	Controverse'.
+ * Classe ORM qui représente la table 'Probleme'.
  *
  * @author Samuel Szoniecky
  * @category   Zend
@@ -8,23 +8,23 @@
  * @license https://creativecommons.org/licenses/by-sa/2.0/fr/ CC BY-SA 2.0 FR
  * @version  $Id:$
  */
-class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
+class Model_DbTable_Probleme extends Zend_Db_Table_Abstract
 {
     
     /*
      * Nom de la table.
      */
-    protected $_name = 'Controverse';
+    protected $_name = 'Probleme';
     
     /*
      * Clef primaire de la table.
      */
-    protected $_primary = 'idControverse';
+    protected $_primary = 'idProbleme';
     protected $_dependentTables = array();
     
         
     /**
-     * Vérifie si une entrée Controverse existe.
+     * Vérifie si une entrée Probleme existe.
      *
      * @param array $data
      *
@@ -33,17 +33,17 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
     public function existe($data)
     {
 		$select = $this->select();
-		$select->from($this, array('idControverse'));
+		$select->from($this, array('idProbleme'));
 		foreach($data as $k=>$v){
 			$select->where($k.' = ?', $v);
 		}
 	    $rows = $this->fetchAll($select);        
-	    if($rows->count()>0)$id=$rows[0]->idControverse; else $id=false;
+	    if($rows->count()>0)$id=$rows[0]->idProbleme; else $id=false;
         return $id;
     } 
         
     /**
-     * Ajoute une entrée Controverse.
+     * Ajoute une entrée Probleme.
      *
      * @param array $data
      * @param boolean $existe
@@ -62,7 +62,7 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
     } 
            
     /**
-     * Recherche une entrée Controverse avec la clef primaire spécifiée
+     * Recherche une entrée Probleme avec la clef primaire spécifiée
      * et modifie cette entrée avec les nouvelles données.
      *
      * @param integer $id
@@ -73,11 +73,11 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
     public function edit($id, $data)
     {        
    	
-    		$this->update($data, 'Controverse.idControverse = ' . $id);
+    		$this->update($data, 'Probleme.idProbleme = ' . $id);
     }
     
     /**
-     * Recherche une entrée Controverse avec la clef primaire spécifiée
+     * Recherche une entrée Probleme avec la clef primaire spécifiée
      * et supprime cette entrée.
      *
      * @param integer $id
@@ -86,51 +86,55 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
      */
     public function remove($id)
     {    	
-	    	$this->delete('Controverse.idControverse = ' . $id);
+	    	$this->delete('Probleme.idProbleme = ' . $id);
     }
-
+    
     /**
-     * Recherche toutes les entrées Questions des Controverses 
+     * Recherche toutes les entrées avec toute les dépendances 
+     * suivant les paramètre
      *
+     * @param	int		$idProb
      *
      * @return array
      */
-    public function getAllQuestion()
+    public function getAll($idProb=0)
     {
-    		$sql = "SELECT 
-		    c.idControverse ,
-		    c.doc_id_liste,
+    	$sql = "SELECT 
+		    p.idProbleme recid,
+		    p.doc_id_liste,
 		    dLis.titre titreListe,
-		    c.doc_id_livre,
+		    p.doc_id_livre,
 		    dLiv.titre titreLivre,
-		    c.uti_id_auteur,
+		    p.uti_id_auteur,
 		    uA.login,
-		    c.idQuestion recid,
+		    p.idQuestion,
 		    Q.valeur,
+		    GROUP_CONCAT(c.idControverse) idsC,
 		    GROUP_CONCAT(c.valide) valids,
 		    GROUP_CONCAT(c.idIndice) idsInd,
 		    GROUP_CONCAT(I.valeur) valInd,
 		    COUNT(cRep.idControverse) nbReponse
 		FROM
-		    Controverse c
+		    Probleme p
 		        INNER JOIN
-		    flux_doc dLiv ON dLiv.doc_id = c.doc_id_livre
+		    flux_doc dLiv ON dLiv.doc_id = p.doc_id_livre
 		        INNER JOIN
-		    flux_doc dLis ON dLis.doc_id = c.doc_id_liste
+		    flux_doc dLis ON dLis.doc_id = p.doc_id_liste
 		        INNER JOIN
-		    flux_uti uA ON uA.uti_id = c.uti_id_auteur
+		    flux_uti uA ON uA.uti_id = p.uti_id_auteur
 		        INNER JOIN
-		    Question Q ON Q.idQuestion = c.idQuestion
+		    Question Q ON Q.idQuestion = p.idQuestion
+		        INNER JOIN
+		    Controverse c ON c.idProbleme = p.idProbleme AND c.uti_id_joueur = p.uti_id_auteur
 		        INNER JOIN
 		    Indice I ON I.idIndice = c.idIndice
 		        LEFT JOIN
-		    Controverse cRep ON cRep.doc_id_liste = c.doc_id_liste
-		        AND cRep.doc_id_livre = c.doc_id_livre
-		        AND cRep.idQuestion = c.idQuestion
-		        AND cRep.uti_id_auteur IS NULL
-		GROUP BY c.doc_id_liste , c.doc_id_livre , c.idQuestion";
-    		$stmt = $this->_db->query($sql);
-    		return $stmt->fetchAll();
+		    Controverse cRep ON cRep.idProbleme = p.idProbleme AND cRep.uti_id_joueur <> p.uti_id_auteur
+		    ";
+		if($idProb) $sql .= " WHERE p.idProbleme = ".$idProb;
+		$sql .= " GROUP BY p.idProbleme ";
+	    	$stmt = $this->_db->query($sql);
+	    	return $stmt->fetchAll();
     }
     
 }

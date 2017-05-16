@@ -33,12 +33,12 @@ class Model_DbTable_Indice extends Zend_Db_Table_Abstract
     public function existe($data)
     {
 		$select = $this->select();
-		$select->from($this, array('id'));
+		$select->from($this, array('idIndice'));
 		foreach($data as $k=>$v){
 			$select->where($k.' = ?', $v);
 		}
 	    $rows = $this->fetchAll($select);        
-	    if($rows->count()>0)$id=$rows[0]->id; else $id=false;
+	    if($rows->count()>0)$id=$rows[0]->idIndice; else $id=false;
         return $id;
     } 
         
