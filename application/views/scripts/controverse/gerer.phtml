@@ -12,7 +12,7 @@
 
 <script type="text/javascript">
 var uti = <?php echo $this->uti;?>;
-var rsListes, rsLivres, rsProblemes, dataFormProbleme;
+var rsListes, rsLivres, rsProblemes, dataFormProbleme, rsReponse;
 var itemListe, itemLivre, itemProb, itemReponse;
 
 //modification des propriétés globales
@@ -116,13 +116,8 @@ var config = {
 		onAdd: function(event) {            
 	    },
 	    onClick: function(event) {
-            var grid = this;
-            var form = w2ui.form;
-            console.log(event);
-            event.onComplete = function () {
-                var sel = gridProbleme.getSelection();
-                console.log(sel);
-            }
+            var itemSelect = this.get(event.recid);
+            chargeReponse(itemSelect.recid);          			           		           
         }
     },
     gridReponse: { 
@@ -143,6 +138,8 @@ var config = {
         columns: [
             { field: 'recid', caption: 'recid', hidden: true },
             { field: 'uti_id_jouer', caption: 'idJoueur', hidden: true },
+            { field: 'exi_id_equipe', caption: 'idEquipe', hidden: true },
+            { field: 'equipe', caption: "Equipe", size: '33%', sortable: true},
             { field: 'login', caption: "Nom du joueur", size: '33%', sortable: true},
             { field: 'valeur', caption: 'Réponse', size: '33%', sortable: true },
             { field: 'created', caption: 'Date', size: '33%' }            
@@ -158,8 +155,8 @@ var config = {
 			             w2alert('Veuillez sélectionner un problème.').ok(function () { console.log('ok'); });
 			             return;
 		            }           
-		            var itemProb = w2ui.gridProbleme.get(idProb[0]);
-		            showFormRep(itemProb);
+		            itemProb = w2ui.gridProbleme.get(idProb[0]);
+		            showFormRep();
                 }
             }
         },          
@@ -174,38 +171,6 @@ var config = {
             event.onComplete = function () {
                 var sel = gridProbleme.getSelection();
                 console.log(sel);
-            }
-        }
-    },    
-    formReponse: { 
-        header: 'Veuillez remplir les champs obligatoires.',
-        name: 'formReponse',
-        fields: [
-	    		//{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
-        		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
-            //{ name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
-            { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
-            //{ name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
-            { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
-            { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
-			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
-        ],
-        actions: {
-            Annuler: function () {
-                this.clear();
-            },
-            Valider: function () {
-                var errors = this.validate();
-                if (errors.length > 0) return;
-				//enregistre les données dans la base
-				ajouteProbleme(w2ui['formProbleme'].record);
             }
         }
     },
@@ -241,6 +206,35 @@ var config = {
             }
         }
     },    
+    formReponse: { 
+        header: 'Veuillez remplir les champs obligatoires.',
+        name: 'formReponse',
+        fields: [
+        		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
+            { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
+            { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
+            { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
+			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
+        ],
+        actions: {
+            Annuler: function () {
+                this.clear();
+            },
+            Valider: function () {
+                var errors = this.validate();
+                if (errors.length > 0) return;
+				//enregistre les données dans la base
+				ajouteQuestion(w2ui['formProbleme'].record);
+            }
+        }
+    },        
     gridListe: { 
         name     : 'gridListe',
 		header: 'Les listes de la BU présentes dans ExplAgora',		
@@ -378,6 +372,7 @@ $(function () {
 		    w2ui.layoutMain.content('main', $().w2layout(config.layoutContro));
 
 		    w2ui.layoutContro.content('top', $().w2grid(config.gridProbleme));
+		    w2ui.layoutContro.content('main', $().w2grid(config.gridReponse));
 
 			w2ui.layoutBU.content('left', $().w2grid(config.gridListe));
 			w2ui.layoutBU.content('main', $().w2grid(config.gridLivre));
@@ -466,7 +461,27 @@ function showFormProbleme(){
     });	
 }
 
-showFormRep(itemProb){
+function chargeReponse(id){
+	$.getJSON( "../controverse/reponse?idProbleme="+id, function( data ) {		
+		rsReponse = data;
+	    	w2ui['gridReponse'].clear();
+	    	w2ui['gridReponse'].add(rsReponse);			        			
+	});
+	
+}
+
+function ajouteReponse(){
+    var url = "../controverse/creer";
+    var dt = {"table":"reponse","data":data};
+	$.getJSON(url, dt, function( rep ) {
+		console.log(rep);
+        w2alert('La réponse est ajoutée.').ok(function () { console.log('ok'); });		
+        w2ui.gridReponse.add(rep);
+        w2ui.gridReponse.selectNone();
+	});                            	
+}
+
+function showFormRep(){
 	$().w2popup('open', {
         title   : "Ajout d'une réponse",
         body    : '<div id="form" style="width: 100%; height: 100%;"></div>',
@@ -483,8 +498,8 @@ showFormRep(itemProb){
         },
         onOpen: function (event) {
             event.onComplete = function () {
-                // specifying an onOpen handler instead is equivalent to specifying an onBeforeOpen handler, which would make this code execute too early and hence not deliver.
-                w2ui.formReponse.record = dataFormReponse;
+            	   itemProb.valid1 = false;
+                w2ui.formReponse.record = itemProb;
                 w2ui.formReponse.refresh();                
                 $('#w2ui-popup #form').w2render('formReponse');
             }

@@ -34,6 +34,16 @@ class ControverseController extends Zend_Controller_Action
 		$this->view->result = json_encode($arr);		
 		
 	}
+
+	public function reponseAction(){
+	
+		//récupère les reponse
+		$bdC = new Model_DbTable_Controverse();
+		$arr = $bdC->getReponseForProbleme($this->_getParam('idProbleme'));
+		$arr = $this->groupConcatIndiceToColonne($arr);
+		$this->view->result = json_encode($arr);
+	
+	}
 	
     public function creerAction()
     {	

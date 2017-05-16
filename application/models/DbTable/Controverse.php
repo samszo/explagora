@@ -133,4 +133,39 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
     		return $stmt->fetchAll();
     }
     
+    		/**
+    		 * Recherche toutes les réponses pour un probleme
+    		 *
+    		 *
+    		 * @return array
+    		 */
+    		public function getReponseForProbleme()
+    		{
+    			$sql = "SELECT
+		    c.idProbleme recid,
+    			c.uti_id_jouer,		
+		    uJ.login,
+    			c.exi_id_equipe,
+		    eE.login,
+		    Q.valeur,
+		    GROUP_CONCAT(c.idControverse) idsCont,
+    			GROUP_CONCAT(c.valide) valids,
+		    GROUP_CONCAT(c.idIndice) idsInd,
+		    GROUP_CONCAT(I.valeur) valInd
+		FROM
+		    Controverse c
+		        INNER JOIN
+		    flux_uti uJ ON uJ.uti_id = c.uti_id_jouer
+		        INNER JOIN
+		    flux_exi eE ON eE.exi_id = c.exi_id_equipe
+    				INNER JOIN
+		    Question Q ON Q.idQuestion = c.idQuestion
+		        INNER JOIN
+		    Indice I ON I.idIndice = c.idIndice
+		GROUP BY c.idProbleme";
+    			$stmt = $this->_db->query($sql);
+    			return $stmt->fetchAll();
+    		}
+    		
+    		
 }
