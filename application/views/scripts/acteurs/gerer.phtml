@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ExplAgora - gérer les acteurs</title>
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/w2ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/w2ui.min.css" />
+</head>
+<body>
+
+<div id="main" style="width: 100%; height: 800px;"></div>
+
+<script type="text/javascript">
+var uti = <?php echo $this->uti;?>;
+var rsActeurs, rsEquipes, rsRoles, rsDroits;
+var itemUti, itemEquipe;
+
+//modification des propriétés globales
+//w2utils.locale('fr-fr');
+var btn = w2obj.grid.prototype.buttons;
+btn['add'].caption     = 'Ajouter';
+
+var optGridShow = {header:true,		
+	toolbar:true,
+	toolbarReload:true,
+	toolbarColumns:true,
+	toolbarSearch:true,
+	toolbarAdd:false,
+	toolbarDelete:uti.role=="lecteur" ? false : false,
+	selectColumn	:false,
+	footer: true};
+
+function initAuteur() {
+	// widget configuration
+	var config = {
+	    layoutMain: {
+	        name: 'layoutMain',
+	        padding: 4,
+	        panels: [
+	            { type: 'top', size: '60px', resizable: false, content: '<h1 align="center">Gérer les acteurs</h1>'},
+	            { type: 'left', size: '50%', resizable: true, minSize: 300 },
+	            { type: 'main', size: '50%', resizable: true, minSize: 300 }
+	        ]
+	    },
+	    gridActeur: { 
+	        name: 'gridActeur',
+			header: 'Listes des acteurs',
+	        show: optGridShow,
+	        columns: [
+	            { field: 'recid', caption: 'recid', hidden: true },
+	            { field: 'login', caption: "Login", size: '33%', sortable: true},
+	            { field: 'role', caption: "Droit", size: '33%', sortable: true},
+	            { field: 'nbEquipe', caption: "Nombre d'équipe", size: '33%', sortable: true},
+	            { field: 'nbProbleme', caption: "Nombre de problème", size: '33%', sortable: true},
+	            { field: 'nbControverse', caption: "Nombre de controverse", size: '33%', sortable: true},
+	            { field: 'score', caption: "Score", size: '33%', sortable: true},
+	            { field: 'date_inscription', caption: "Présent depuis", size: '33%' }            
+	        ],
+	        toolbar: {
+	            items: [
+	                { id: 'ajoutActeur', type: 'button', caption: 'Ajouter un acteur', icon: ' fa-external-link'},
+	            ],
+	            onClick: function (event) {
+	                if (event.target == 'ajoutActeur') {
+			            showFormActeur();
+	                }
+	            }
+	        },          
+	        records: [
+	        ],
+			onAdd: function(event) {            
+		    },
+		    onClick: function(event) {
+	            var itemSelect = this.get(event.recid);
+	            chargeEquipe(itemSelect.recid);          			           		           
+	        }
+	    },
+	    gridEquipe: { 
+	        name: 'gridEquipe',
+			header: "Les équipes de l'acteur",
+	        show: optGridShow,
+	        columns: [
+	            { field: 'recid', caption: 'recid', hidden: true },
+	            { field: 'uti_id', caption: 'idActeur', hidden: true },
+	            { field: 'role_id', caption: 'idRole', hidden: true },
+	            { field: 'nom', caption: "Nom de l'équipe", size: '33%', sortable: true},
+	            { field: 'role', caption: "Rôle de l'acteur", size: '33%', sortable: true},
+	            { field: 'nbJoueur', caption: "Nombre de joueur", size: '33%', sortable: true},
+	            { field: 'nbControverse', caption: "Nombre de controverse", size: '33%', sortable: true},
+	            { field: 'nbProbleme', caption: "Nombre de problèmes", size: '33%', sortable: true},
+	            { field: 'score', caption: "Score", size: '33%', sortable: true},
+	            { field: 'maj', caption: "Membre depuis", size: '33%' }  	                      
+	        ],
+	        toolbar: {
+	            items: [
+	                { id: 'ajoutEquipe', type: 'button', caption: "Ajouter une équipe à l'acteur", icon: ' fa-external-link'},
+	            ],
+	            onClick: function (event) {
+	                if (event.target == 'ajoutEquipe') {
+			            var idAct = w2ui.gridActeur.getSelection();
+			            if(!idAct.length){
+				             w2alert('Veuillez sélectionner un acteur.').ok(function () { console.log('ok'); });
+				             return;
+			            }           
+			            itemActeur = w2ui.gridActeur.get(idAct[0]);
+			            showFormEquipeForActeur();
+	                }
+	            }
+	        },          
+	        records: [
+	        ],
+			onAdd: function(event) {            
+		    },
+		    onClick: function(event) {
+	        }
+	    },
+	    formActeur: { 
+	        header: 'Merci de remplir le champ.',
+	        name: 'formActeur',
+	        fields: [
+	            { name: 'login', type: 'text', required : true, html: { caption: "login de l'acteur", attr: 'size="50"' } },
+	            { field: 'droits',html: { attr: 'style="width: 80px;"' }, type: 'list', required: true, 
+	                options: { items: rsDroits } },
+	        ],
+	        actions: {
+	            Annuler: function () {
+	                this.clear();
+	            },
+	            Valider: function () {
+	                var errors = this.validate();
+	                if (errors.length > 0) return;
+					//enregistre les données dans la base
+					ajouteActeur(w2ui['formActeur'].record);
+	            }
+	        }
+	    },    
+	    formEquipeForActeur: { 
+	        header: 'Veuillez remplir les champs obligatoires.',
+	        name: 'formEquipeForActeur',
+	        fields: [
+	            { name: 'login', type: 'text', required : true, html: { caption: "Login de l'acteur", attr: 'style="width:90%" readonly' } },
+	        		{ name: 'nom', type: 'combo', required : true, html: { caption: "Nom de l'équipe", attr: 'size="50"' } },
+	            { field: 'role',html: { attr: 'style="width: 120px;"' }, type: 'list', required: true, 
+	                options: { items: rsRoles } },
+	        ],
+	        actions: {
+	            Annuler: function () {
+	                this.clear();
+	            },
+	            Valider: function () {
+	                var errors = this.validate();
+	                if (errors.length > 0) return;
+					//enregistre les données dans la base
+					ajouteEquipeForActeur(w2ui['formEquipeForActeur'].record);
+	            }
+	        }
+	    },        
+	};
+	    			
+	//initialisation des objet w2ui
+    $('#main').w2layout(config.layoutMain);
+    w2ui.layoutMain.content('left', $().w2grid(config.gridActeur));
+    w2ui.layoutMain.content('main', $().w2grid(config.gridEquipe));
+
+    $().w2form(config.formActeur);
+    $().w2form(config.formEquipeForActeur);
+    
+	//chargement des données
+    	w2ui['gridActeur'].clear();
+    	w2ui['gridActeur'].add(rsActeurs);			        	
+}
+
+function chargeEquipe(idActeur){
+    var url = "../acteurs/datas?q=equipe&idActeur="+idActeur;
+	$.getJSON(url, function( data ) {
+	    	console.log(data);
+	    rsEquipes = data;
+	    	w2ui['gridEquipe'].clear();
+	    	w2ui['gridEquipe'].add(rsEquipes);			        	
+	});                            
+	
+}
+function ajouteActeur(data){
+    var url = "../acteurs/creer";
+    var dt = {"table":"acteur",'login':data.login,'droit':data.droits.text};
+	$.getJSON(url, dt, function( rep ) {
+		console.log(rep);
+        w2alert("L'acteur est ajouté.").ok(function () { console.log('ok'); });		
+        w2ui.gridActeur.add(rep);
+        w2ui.gridActeur.selectNone();
+	});                            
+	
+}
+function showFormActeur(){
+	$().w2popup('open', {
+        title   : "Ajout d'un problème",
+        body    : '<div id="form" style="width: 100%; height: 100%;"></div>',
+        style   : 'padding: 15px 0px 0px 0px',
+        width   : 600,
+        height  : 400, 
+        showMax : true,
+        onToggle: function (event) {
+            $(w2ui.formActeur.box).hide();
+            event.onComplete = function () {
+                $(w2ui.formActeur.box).show();
+                w2ui.formActeur.resize();
+            }
+        },
+        onOpen: function (event) {
+            event.onComplete = function () {
+                w2ui.formActeur.refresh();                
+                $('#w2ui-popup #form').w2render('formActeur');
+            }
+        }
+    });	
+}
+
+
+function ajouteEquipeForActeur(data){
+    var url = "../acteurs/creer";
+    var dt = {"table":"equipe","idUti":data.recid,"equipe":data.nom,"role":data.role.tag_id};
+	$.getJSON(url, dt, function( rs ) {
+        w2alert("L'équipe est ajoutée.").ok(function () { console.log('ok'); });		
+        w2ui.gridEquipe.add(rs);
+        w2ui.gridEquipe.selectNone();
+	});                            	
+}
+
+function showFormEquipeForActeur(){
+	$().w2popup('open', {
+        title   : "Ajout d'une équipe à l'acteur",
+        body    : '<div id="form" style="width: 100%; height: 100%;"></div>',
+        style   : 'padding: 15px 0px 0px 0px',
+        width   : 600,
+        height  : 800, 
+        showMax : true,
+        onToggle: function (event) {
+            $(w2ui.formEquipeForActeur.box).hide();
+            event.onComplete = function () {
+                $(w2ui.formEquipeForActeur.box).show();
+                w2ui.formEquipeForActeur.resize();
+            }
+        },
+        onOpen: function (event) {
+            event.onComplete = function () {
+                w2ui.formEquipeForActeur.record = itemActeur;
+                w2ui.formEquipeForActeur.refresh();                
+                $('#w2ui-popup #form').w2render('formEquipeForActeur');
+            }
+        }
+    });	
+}
+
+//chargement des données
+$.getJSON( "../acteurs/datas", function( datas ) {
+    	rsActeurs = datas.acteurs, rsRoles = datas.roles, rsDroits = datas.droits;
+    	initAuteur(); 	    						
+});
+
+
+</script>
+
+</body>
+</html>

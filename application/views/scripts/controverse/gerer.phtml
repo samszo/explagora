@@ -2,9 +2,9 @@
 <html>
 <head>
     <title>ExplAgora - gérer les controverses</title>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
-    <script type="text/javascript" src="http://rawgit.com/vitmalina/w2ui/master/dist/w2ui.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="http://rawgit.com/vitmalina/w2ui/master/dist/w2ui.min.css" />
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/w2ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/w2ui.min.css" />
 </head>
 <body>
 
@@ -84,10 +84,13 @@ var config = {
             { field: 'valeur', caption: 'Votre question', size: '60%', sortable: true },
             { field: 'nbReponse', caption: 'Nb de réponse', size: '33%', sortable: true},
             { field: 'valInd0', caption: 'Indice 1', size: '33%', sortable: true },
-            { field: 'valInd1', caption: 'Indice 2', size: '33%' },
-            { field: 'valInd2', caption: 'Indice 3', size: '33%' },
-            { field: 'valInd3', caption: 'Indice 4', size: '33%' }
-            
+            { field: 'idInd0', caption: 'id Indice 1', hidden: true },
+            { field: 'valInd1', caption: 'Indice 2', size: '33%', sortable: true  },
+            { field: 'idInd1', caption: 'id Indice 2', hidden: true },
+            { field: 'valInd2', caption: 'Indice 3', size: '33%', sortable: true  },
+            { field: 'idInd2', caption: 'id Indice 3', hidden: true },
+            { field: 'valInd3', caption: 'Indice 4', size: '33%', sortable: true  },            
+            { field: 'idInd3', caption: 'id Indice 4', hidden: true },
         ],
         toolbar: {
             items: [
@@ -106,7 +109,10 @@ var config = {
 			             return;
 		            }
 		            itemListe = w2ui.gridListe.get(idListe[0]);
-		            itemLivre = w2ui.gridListe.get(idLivre[0]);
+		            itemLivre = w2ui.gridLivre.get(idLivre[0]);
+		            dataFormProbleme =  {'titreListe':itemListe.titre, 'idListe':itemListe.recid
+		            		, 'titreLivre':itemLivre.titre, 'idLivre':itemLivre.recid
+		            		, 'idAuteur':uti.idUti, 'nomAuteur':uti.login};
 		            showFormProbleme();
                 }
             }
@@ -116,33 +122,25 @@ var config = {
 		onAdd: function(event) {            
 	    },
 	    onClick: function(event) {
-            var itemSelect = this.get(event.recid);
-            chargeReponse(itemSelect.recid);          			           		           
+	    		itemProb = this.get(event.recid);
+            chargeReponse(itemProb.recid);          			           		           
         }
     },
     gridReponse: { 
         name: 'gridReponse',
 		header: 'Les réponses au problème',
         show: optGridShow,
-        /*
-		{"recid":"1","doc_id_liste":"186","titreListe":"Jeux en biblioth\u00e8que"
-		,"doc_id_livre":"188","titreLivre":"Serious game"
-		,"uti_id_auteur":"1","login":"explagora"
-		,"idQuestion":"2","valeur":"Une bonne question"
-		,"idsC":"3,1,2","valids":"1,1,0","idsInd":"6,4,5","valInd":"lkjlkj lkjlkj ,12,jjhjkh jkh "
-		,"nbReponse":"0"
-		,"idC0":"3","idInd0":"6","valInd0":"lkjlkj lkjlkj ","validInd0":"1"
-		,"idC1":"1","idInd1":"4","valInd1":"12","validInd1":"1"
-		,"idC2":"2","idInd2":"5","valInd2":"jjhjkh jkh ","validInd2":"0"}       
-        */
         columns: [
             { field: 'recid', caption: 'recid', hidden: true },
             { field: 'uti_id_jouer', caption: 'idJoueur', hidden: true },
             { field: 'exi_id_equipe', caption: 'idEquipe', hidden: true },
-            { field: 'equipe', caption: "Equipe", size: '33%', sortable: true},
+            { field: 'nom', caption: "Equipe", size: '33%', sortable: true},
             { field: 'login', caption: "Nom du joueur", size: '33%', sortable: true},
-            { field: 'valeur', caption: 'Réponse', size: '33%', sortable: true },
-            { field: 'created', caption: 'Date', size: '33%' }            
+            { field: 'valeur', caption: 'Question', size: '33%', sortable: true },
+            { field: 'ordre', caption: 'Ordre', size: '33%', sortable: true },
+            { field: 'indice', caption: 'indice', size: '33%', sortable: true },
+            { field: 'valide', caption: 'Réponse', size: '33%', sortable: true },
+            { field: 'created', caption: 'Date', size: '33%' }                        
         ],
         toolbar: {
             items: [
@@ -165,9 +163,6 @@ var config = {
 		onAdd: function(event) {            
 	    },
 	    onClick: function(event) {
-            var grid = this;
-            var form = w2ui.form;
-            console.log(event);
             event.onComplete = function () {
                 var sel = gridProbleme.getSelection();
                 console.log(sel);
@@ -178,21 +173,18 @@ var config = {
         header: 'Veuillez remplir les champs obligatoires.',
         name: 'formProbleme',
         fields: [
-	    		//{ name: 'idListe', type: 'text', html: { caption: 'idListe', attr: 'size="50" readonly' } },
         		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
-            //{ name: 'idLivre', type: 'text', html: { caption: 'idLivre', attr: 'size="10" readonly' } },
             { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
-            //{ name: 'idAuteur', type: 'text', html: { caption: 'idAuteur', attr: 'size="50" readonly' } },
             { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
             { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
-			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice0', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valid0', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
 			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice2', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
 			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'indice3', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
 			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
         ],
         actions: {
             Annuler: function () {
@@ -212,26 +204,40 @@ var config = {
         fields: [
         		{ name: 'titreListe', type: 'text', required : true, html: { caption: 'Nom de la liste', attr: 'size="50" readonly' } },
             { name: 'titreLivre', type: 'text', required : true, html: { caption: 'Titre du livre', attr: 'style="width:90%" readonly' } },
-            { name: 'nomAuteur', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
-            { name: 'question', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
-			{ name: 'indice1', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'size="50" maxlength="40"' } },
+            { name: 'login', type: 'text', required : true, html: { caption: 'Auteur de la question', attr: 'size="50" readonly' } },
+            { name: 'valeur', type: 'textarea', required : true, html: { caption: 'Texte de la question', attr: 'readonly style="margin-left:0px;width: 90%; height: 100px; resize: none"' } },
+            { field: 'equipe',html: {caption: 'Votre équipe', attr: 'style="width: 80px;"' }, type: 'list', required: true, 
+                options: { items: uti.equipes } },
+			{ name: 'valInd0', type: 'text', required : true, html: { caption: 'Premier indice', attr: 'readonly size="50" maxlength="40"' } },
+			{ name: 'valid0', type: 'checkbox', html: {caption: 'valide'} },
+			{ name: 'valInd1', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'readonly size="50" maxlength="40"' } },
 			{ name: 'valid1', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice2', type: 'text', required : true, html: { caption: 'Deuxième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valInd2', type: 'text', html: { caption: 'Troisième indice', attr: 'readonly size="50" maxlength="40"' } },
 			{ name: 'valid2', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice3', type: 'text', html: { caption: 'Troisième indice', attr: 'size="50" maxlength="40"' } },
+			{ name: 'valInd3', type: 'text', html: { caption: 'Quatrième indice', attr: 'readonly size="50" maxlength="40"' } },
 			{ name: 'valid3', type: 'checkbox', html: {caption: 'valide'} },
-			{ name: 'indice4', type: 'text', html: { caption: 'Quatrième indice', attr: 'size="50" maxlength="40"' } },
-			{ name: 'valid4', type: 'checkbox', html: {caption: 'valide'} },
-        ],
+			],
         actions: {
             Annuler: function () {
                 this.clear();
             },
             Valider: function () {
+
                 var errors = this.validate();
                 if (errors.length > 0) return;
 				//enregistre les données dans la base
-				ajouteQuestion(w2ui['formProbleme'].record);
+				var rcd = w2ui['formReponse'].record;
+				var data =  {"idP":rcd.recid
+					,"idE":rcd.equipe.id
+					,"idJ":uti.idUti};
+		        for (var i = 0; i < 4; i++){
+					if(rcd["valInd"+i]){
+						data["valid"+i]=rcd["valid"+i];
+						data["idInd"+i]=rcd["idInd"+i];
+					}
+		        }
+				ajouteReponse(data);
+                
             }
         }
     },        
@@ -293,7 +299,8 @@ var config = {
 	    },
         onClick: function (event) {
             var itemSelect = this.get(event.recid);
-            chargeLivre(itemSelect.tronc);          			           		           
+            chargeLivre(itemSelect.tronc);
+            chargeProbleme('idListe',itemSelect.recid);          			           		           
         }	
     },    
     formListe: { 
@@ -334,26 +341,8 @@ var config = {
         },
         records: [],
         onClick: function(event) {
-            var grid = this;
-            var form = w2ui.form;
-            console.log(event);
-            event.onComplete = function () {
-                //récupère les données du livre
-                var sel = grid.getSelection();
-                var livre = grid.get(sel)[0];
-                //récupère les données de la liste
-                var liste = w2ui.gridListe.get(w2ui.gridListe.getSelection())[0];
-                console.log(sel);
-                //construction des donnée
-                dataFormProbleme = {
-                		idListe:liste.recid,
-                		titreListe:liste.titre,
-                		idLivre:livre.recid,
-                		titreLivre:livre.titre,
-                		idAuteur:uti.idUti,
-                		nomAuteur:uti.nom
-                };                
-            }
+            var itemSelect = this.get(event.recid);
+            chargeProbleme('idLivre',itemSelect.recid);          			           		           
         }
     }           
 };
@@ -378,7 +367,8 @@ $(function () {
 			w2ui.layoutBU.content('main', $().w2grid(config.gridLivre));
 
 		    $().w2form(config.formProbleme);
-
+		    $().w2form(config.formReponse);
+		    
 			//chargement des données
 		    	w2ui['gridProbleme'].clear();
 		    	w2ui['gridProbleme'].add(rsProblemes);			        	
@@ -421,6 +411,19 @@ function chargeListes(){
 	    	w2ui['gridListe'].add( rsListes);			        	
 		
 	});
+	
+}
+
+function chargeProbleme(k, val){
+    var url = "../controverse/probleme?"+k+"="+val;
+	$.getJSON(url, function( data ) {
+	    	console.log(data);
+	    	rsProblemes = data;
+		//format la liste
+	    
+		w2ui.gridProbleme.clear();
+		w2ui.gridProbleme.add(rsProblemes);			        	
+	});                            
 	
 }
 
@@ -470,9 +473,10 @@ function chargeReponse(id){
 	
 }
 
-function ajouteReponse(){
+function ajouteReponse(data){
     var url = "../controverse/creer";
-    var dt = {"table":"reponse","data":data};
+    var dt = {"table":"controverse"
+        ,"data":data};
 	$.getJSON(url, dt, function( rep ) {
 		console.log(rep);
         w2alert('La réponse est ajoutée.').ok(function () { console.log('ok'); });		
@@ -498,7 +502,6 @@ function showFormRep(){
         },
         onOpen: function (event) {
             event.onComplete = function () {
-            	   itemProb.valid1 = false;
                 w2ui.formReponse.record = itemProb;
                 w2ui.formReponse.refresh();                
                 $('#w2ui-popup #form').w2render('formReponse');

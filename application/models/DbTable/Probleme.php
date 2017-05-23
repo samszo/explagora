@@ -94,12 +94,14 @@ class Model_DbTable_Probleme extends Zend_Db_Table_Abstract
      * suivant les paramètre
      *
      * @param	int		$idProb
+     * @param	int		$idListe
+     * @param	int		$idLivre
      *
      * @return array
      */
-    public function getAll($idProb=0)
+    public function getAll($idProb=0, $idListe=0, $idLivre=0)
     {
-    	$sql = "SELECT 
+    		$sql = "SELECT 
 		    p.idProbleme recid,
 		    p.doc_id_liste,
 		    dLis.titre titreListe,
@@ -124,16 +126,21 @@ class Model_DbTable_Probleme extends Zend_Db_Table_Abstract
 		    flux_uti uA ON uA.uti_id = p.uti_id_auteur
 		        INNER JOIN
 		    Question Q ON Q.idQuestion = p.idQuestion
-		        INNER JOIN
-		    Controverse c ON c.idProbleme = p.idProbleme AND c.uti_id_joueur = p.uti_id_auteur
-		        INNER JOIN
+		        LEFT JOIN
+		    Controverse c ON c.idProbleme = p.idProbleme AND c.uti_id_joueur IS NULL
+		        LEFT JOIN
 		    Indice I ON I.idIndice = c.idIndice
 		        LEFT JOIN
 		    Controverse cRep ON cRep.idProbleme = p.idProbleme AND cRep.uti_id_joueur <> p.uti_id_auteur
 		    ";
 		if($idProb) $sql .= " WHERE p.idProbleme = ".$idProb;
-		$sql .= " GROUP BY p.idProbleme ";
-	    	$stmt = $this->_db->query($sql);
+		else{
+			if($idListe) $sql .= " WHERE p.doc_id_liste = ".$idListe;
+			if($idLivre) $sql .= " WHERE p.doc_id_livre = ".$idLivre;
+			$sql .= " GROUP BY p.idProbleme ";
+		}
+		//echo $sql;
+		$stmt = $this->_db->query($sql);
 	    	return $stmt->fetchAll();
     }
     

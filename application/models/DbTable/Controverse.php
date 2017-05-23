@@ -135,37 +135,42 @@ class Model_DbTable_Controverse extends Zend_Db_Table_Abstract
     
     		/**
     		 * Recherche toutes les réponses pour un probleme
-    		 *
+    		 * 
+    		 * @param int $idProb
     		 *
     		 * @return array
     		 */
-    		public function getReponseForProbleme()
+    		public function getReponseForProbleme($idProb)
     		{
     			$sql = "SELECT
-		    c.idProbleme recid,
-    			c.uti_id_jouer,		
-		    uJ.login,
-    			c.exi_id_equipe,
-		    eE.login,
-		    Q.valeur,
-		    GROUP_CONCAT(c.idControverse) idsCont,
-    			GROUP_CONCAT(c.valide) valids,
-		    GROUP_CONCAT(c.idIndice) idsInd,
-		    GROUP_CONCAT(I.valeur) valInd
-		FROM
-		    Controverse c
-		        INNER JOIN
-		    flux_uti uJ ON uJ.uti_id = c.uti_id_jouer
-		        INNER JOIN
-		    flux_exi eE ON eE.exi_id = c.exi_id_equipe
-    				INNER JOIN
-		    Question Q ON Q.idQuestion = c.idQuestion
-		        INNER JOIN
-		    Indice I ON I.idIndice = c.idIndice
-		GROUP BY c.idProbleme";
+		    		c.idControverse recid,
+		    		c.idProbleme ,
+		    		c.uti_id_joueur,
+		    		uJ.login,
+		    		c.exi_id_equipe,
+		    		eE.nom,
+		    		Q.valeur,
+		    		c.valide,
+		    		c.idIndice,
+    				c.created,
+		    		I.valeur indice,
+    				I.ordre
+	    		FROM
+	    		Controverse c
+		    		INNER JOIN
+		    		flux_uti uJ ON uJ.uti_id = c.uti_id_joueur
+		    		INNER JOIN
+		    		flux_exi eE ON eE.exi_id = c.exi_id_equipe
+		    		INNER JOIN
+		    		Probleme P ON P.idProbleme = c.idProbleme
+		    		INNER JOIN
+		    		Question Q ON Q.idQuestion = P.idQuestion
+		    		INNER JOIN
+		    		Indice I ON I.idIndice = c.idIndice
+	    		WHERE  c.idProbleme = ".$idProb;
+    			//echo $sql;
     			$stmt = $this->_db->query($sql);
     			return $stmt->fetchAll();
-    		}
-    		
+    		}    		
     		
 }

@@ -260,7 +260,7 @@ class Model_DbTable_Flux_Uti extends Zend_Db_Table_Abstract
         	->distinct()
    	     	->from( array("f" => "flux_uti"),$col)
    	     	->where($col." !=''");
-    	return $this->fetchAll($query)->toArray();        
+	    	return $this->fetchAll($query)->toArray();        
     } 
 
     /**
@@ -270,16 +270,16 @@ class Model_DbTable_Flux_Uti extends Zend_Db_Table_Abstract
      */
     public function getRolesUtis()
     {
-    	$arrRoles = $this->getDistinct("role");
-    	$nbRole = count($arrRoles);
-    	for ($i = 0; $i < $nbRole; $i++) {
-    		//pour la base flux_tweetpalette
-    		//$arrUti = $this->findByRole($arrRoles[$i]["role"],true);
-    		//pour la base flux_etu
-    		$arrUti = $this->findByRole($arrRoles[$i]["role"],true, true);
-    		$arrRoles[$i]['utis'] = $arrUti;
-    	}
-    	return $arrRoles;        
+	    	$arrRoles = $this->getDistinct("role");
+	    	$nbRole = count($arrRoles);
+	    	for ($i = 0; $i < $nbRole; $i++) {
+	    		//pour la base flux_tweetpalette
+	    		//$arrUti = $this->findByRole($arrRoles[$i]["role"],true);
+	    		//pour la base flux_etu
+	    		$arrUti = $this->findByRole($arrRoles[$i]["role"],true, true);
+	    		$arrRoles[$i]['utis'] = $arrUti;
+	    	}
+	    	return $arrRoles;        
     } 
     
 }

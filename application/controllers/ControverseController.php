@@ -12,14 +12,16 @@ class ControverseController extends Zend_Controller_Action
     
     public function gererAction()
     {
-	    	$this->view->uti = "{'idUti':1,'role':'admin','nom':'explagora'}";
+	    	$this->view->uti = "{'idUti':1,'role':'admin','login':'explagora'
+	    			, 'equipes':[{'id':3,'text':'équipe 1'},{'id':5,'text':'équipe 2'}]}";
 	}    
 
 	public function problemeAction(){
 	
 		//récupère les problemes
 		$bd = new Model_DbTable_Probleme();
-		$arr = $bd->getAll();
+		$arr = $bd->getAll($this->_getParam("idProb"),$this->_getParam("idListe"),$this->_getParam("idLivre"));
+		//print_r($arr);
 		$arr = $this->groupConcatIndiceToColonne($arr);
 		$this->view->result = json_encode($arr);
 	
@@ -40,7 +42,6 @@ class ControverseController extends Zend_Controller_Action
 		//récupère les reponse
 		$bdC = new Model_DbTable_Controverse();
 		$arr = $bdC->getReponseForProbleme($this->_getParam('idProbleme'));
-		$arr = $this->groupConcatIndiceToColonne($arr);
 		$this->view->result = json_encode($arr);
 	
 	}
@@ -67,7 +68,7 @@ class ControverseController extends Zend_Controller_Action
     				);
     				$idP = $bdP->ajouter($arrP);    				
     				//ajoute les indices 
-    				$i = 1;
+    				$i = 0;
     				while (isset($data["indice".$i])) {
     					//élimine les valeur vide
     					if($data["indice".$i]){
@@ -77,7 +78,6 @@ class ControverseController extends Zend_Controller_Action
 							"idProbleme"=>$idP
 		    					,"idIndice"=>$idI
 	    						,"valide"=>$data["valid".$i]	
-	    						,"uti_id_joueur"=>$data["idAuteur"]
 	    					);
 	    					$idC = $bdC->ajouter($arrC);
     					}
@@ -89,15 +89,33 @@ class ControverseController extends Zend_Controller_Action
     			case "question":
     				$bdQ = new Model_DbTable_Question();
     				$this->view->id = $bdQ->ajouter(array("valeur"=>$this->_getParam('valeur')));    				
-    			break;    			
-    			case "controverse":
-    				//$bdQ = new Model_DbTable_Indice(); 
-    			default:
+	    			break;    			
+			case "controverse":
+				$bdC = new Model_DbTable_Controverse();
+				$data = $this->_getParam('data');
+				$i = 0;
+				while (isset($data["idInd".$i])) {
+					//ajoute la controverse
+					$arrC = array(
+							"idProbleme"=>$data["idP"]
+							,"idIndice"=>$data["idInd".$i]
+							,"exi_id_equipe"=>$data["idE"]
+							,"uti_id_joueur"=>$data["idJ"]
+							,"valide"=>$data["valid".$i]
+					);
+					$idC = $bdC->ajouter($arrC);
+					$i++;
+				}
+				$arr = $bdC->getReponseForProbleme($this->_getParam('idP'));
+				$this->view->result = json_encode($arr);				
+				break;
+			default:
     				$this->view->result = $this->_getParam('table');
     				break;
     		}
     	
     }
+    
   	function groupConcatIndiceToColonne($arr){
   		//formate la réponse pour afficher des colonnes pour chaque indice
   		for ($j = 0; $j < count($arr); $j++) {
