@@ -106,7 +106,7 @@ class ControverseController extends Zend_Controller_Action
 					$idC = $bdC->ajouter($arrC);
 					$i++;
 				}
-				$arr = $bdC->getReponseForProbleme($this->_getParam('idP'));
+				$arr = $bdC->getReponseForProbleme($data["idP"]);
 				$this->view->result = json_encode($arr);				
 				break;
 			default:
