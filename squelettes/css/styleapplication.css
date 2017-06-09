@@ -1,0 +1,69 @@
+form p{
+	
+	margin:0;
+	
+}
+input[type=text], input[type=password], input[type=email]{
+	
+	margin-bottom:20px;
+	padding:8px;
+	font-family:"Quicksand";
+	color:#008AFA;
+	border:1px solid #808080;
+	border-radius: 20px;
+}
+input[type=text]:focus, input[type=password]:focus, input[type=email]:focus{
+	
+	border:3px solid #008AFA;
+	background-color : #008AFA;
+	padding:7px;
+	color: #fff;
+}
+
+input[type=submit], .btn-bleu{
+	
+	color:#fff;
+	background-color:#008AFA;
+	padding:10px 24px 14px 24px;
+	border:0;
+	font-family:"QuicksandBold";
+	border-radius: 20px;
+	
+	
+}
+
+input[type=submit]:active, .btn-bleu:active{
+	
+	background-color:#008AFA!important;
+	color:#fff;
+	text-decoration:none;
+	background: #008AFA;
+}
+.btn_continuer{
+	background-color : #fff;
+	color: #008AFA ;
+	border: 0;
+	border-radius : 5px;
+}
+.btn_paris8{
+	background-color : #B82010;
+	color: #fff;
+	border: 0;
+	border-radius : 20px;
+}
+.bienvenue{
+	padding: 20px 25px 15px 25px;
+	color: #fff;
+	background-color : #008AFA;
+	border: 0;
+	border-radius: 20px;
+	text-align : center;
+}
+.btn-bleu{
+	display:inline-block;
+	text-decoration:none;
+}
+.btn-bleu:hover{
+	color:#fff;
+	text-decoration:none;
+}
