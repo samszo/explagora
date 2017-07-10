@@ -138,7 +138,7 @@ class AuthController extends Zend_Controller_Action
 	$this->view->user = phpCAS::getUser();	
 	
 
-	//paramètres de redirection
+	/*paramètres de redirection
 	 $dbNom = $this->_getParam('idBase');
 	 $redir = $this->_getParam('redir');
 	 $s = new Flux_Site($dbNom);	
@@ -148,7 +148,8 @@ class AuthController extends Zend_Controller_Action
 	$rs = $dbUti->ajouter(array("login"=>$this->view->user),true,true);
     //redirige l'utilisteur si besoin
     if($redir)
-		$this->_redirect($redir."?idUti=".$rs[0]["uti_id"]);	
-		
-    }
+		$this->_redirect($redir."?idUti=".$rs[0]["uti_id"]);			
+    */
+
+	}
 }
